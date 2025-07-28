@@ -11,7 +11,7 @@ spec:
   tls:
     - hosts:
         - world.rmeservicesllc.com
-      secretName: world-tls
+      secretName: world-tls-letsencrypt
   rules:
     - host: world.universe.mine
       http:

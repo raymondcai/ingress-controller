@@ -1,0 +1,32 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: world
+  namespace: world
+  annotations:
+    cert-manager.io/cluster-issuer: selfsigned-cluster-issuer
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - world.universe.mine
+      secretName: world-tls
+  rules:
+    - host: world.universe.mine
+      http:
+        paths:
+          - path: /asia
+            pathType: Prefix
+            backend:
+              service:
+                name: asia
+                port:
+                  number: 80
+          - path: /europe
+            pathType: Prefix
+            backend:
+              service:
+                name: europe
+                port:
+                  number: 80

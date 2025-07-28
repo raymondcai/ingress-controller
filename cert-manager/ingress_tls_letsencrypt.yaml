@@ -13,7 +13,7 @@ spec:
         - world.rmeservicesllc.com
       secretName: world-tls-letsencrypt
   rules:
-    - host: world.universe.mine
+    - host: world.rmeservicesllc.com
       http:
         paths:
           - path: /asia

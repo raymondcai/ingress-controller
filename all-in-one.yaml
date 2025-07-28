@@ -1,0 +1,168 @@
+# configmap.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-conf
+  namespace: world
+data:
+  nginx.conf: |
+    user nginx;
+    worker_processes  3;
+    error_log  /var/log/nginx/error.log;
+
+    events {
+      worker_connections  10240;
+    }
+
+    http {
+      server {
+          listen       80;
+          server_name  _;
+
+          root   /usr/share/nginx/html;
+          index  index.html index.htm;
+
+          location /europe {
+              alias /usr/share/nginx/html/;
+              index  index.html index.html;
+          }
+
+          location /asia {
+              alias /usr/share/nginx/html/;
+              index  index.html index.html;
+          }
+
+          location / {
+              root   /usr/share/nginx/html;
+              index  index.html index.htm;
+          }
+      }
+    }
+---
+# deployment-asia.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: asia
+  namespace: world
+  labels:
+    app: asia
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: asia
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  template:
+    metadata:
+      labels:
+        app: asia
+    spec:
+      initContainers:
+        - name: init-container
+          image: busybox:1.28
+          command: ["sh", "-c", "echo 'hello, you reached ASIA' > /html/index.html"]
+          volumeMounts:
+            - name: html
+              mountPath: /html
+      containers:
+        - name: c
+          image: nginx:1.21.5-alpine
+          volumeMounts:
+            - name: nginx-conf
+              mountPath: /etc/nginx
+              readOnly: true
+            - name: html
+              mountPath: /usr/share/nginx/html
+      volumes:
+        - name: html
+          emptyDir: {}
+        - name: nginx-conf
+          configMap:
+            name: nginx-conf
+            optional: false
+---
+# deployment-europe.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: europe
+  namespace: world
+  labels:
+    app: europe
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: europe
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 25%
+      maxSurge: 25%
+  template:
+    metadata:
+      labels:
+        app: europe
+    spec:
+      initContainers:
+        - name: init-container
+          image: busybox:1.28
+          command: ["sh", "-c", "echo 'hello, you reached EUROPE' > /html/index.html"]
+          volumeMounts:
+            - name: html
+              mountPath: /html
+      containers:
+        - name: c
+          image: nginx:1.21.5-alpine
+          volumeMounts:
+            - name: nginx-conf
+              mountPath: /etc/nginx
+              readOnly: true
+            - name: html
+              mountPath: /usr/share/nginx/html
+      volumes:
+        - name: html
+          emptyDir: {}
+        - name: nginx-conf
+          configMap:
+            name: nginx-conf
+            optional: false
+---
+# service-asia.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: asia
+  namespace: world
+  labels:
+    app: asia
+spec:
+  type: ClusterIP
+  selector:
+    app: asia
+  ports:
+    - port: 80
+      targetPort: 80
+      protocol: TCP
+---
+# service-europe.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: europe
+  namespace: world
+  labels:
+    app: europe
+spec:
+  type: ClusterIP
+  selector:
+    app: europe
+  ports:
+    - port: 80
+      targetPort: 80
+      protocol: TCP

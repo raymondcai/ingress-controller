@@ -4,14 +4,14 @@ metadata:
   name: world
   namespace: world
   annotations:
-    cert-manager.io/cluster-issuer: letsencrypt-prod
+    cert-manager.io/cluster-issuer: letsencrypt-dns
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
 spec:
   ingressClassName: nginx
   tls:
     - hosts:
         - world.rmeservicesllc.com
-      secretName: world-tls-letsencrypt
+      secretName: world-tls-dns
   rules:
     - host: world.rmeservicesllc.com
       http:
